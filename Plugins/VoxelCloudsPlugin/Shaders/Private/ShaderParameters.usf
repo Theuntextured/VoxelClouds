@@ -1,0 +1,7 @@
+﻿uint3 VoxelGridSize;
+float3 Offset;
+float VoxelSize;
+float TotalTime;
+float CloudinessThreshold;
+float NoiseScale;
+float Roundedness;

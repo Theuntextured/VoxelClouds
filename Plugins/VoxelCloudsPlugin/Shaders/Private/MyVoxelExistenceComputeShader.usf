@@ -1,0 +1,48 @@
+﻿#pragma once
+#include "/Engine/Public/Platform.ush"
+#include "SimplexNoise.usf"
+
+//#include "/Engine/Private/Common.ush"
+
+/*
+uint3 VoxelGridSize;
+float3 Offset;
+float VoxelSize;
+float TotalTime;
+float CloudinessThreshold;
+float NoiseScale;
+*/
+#include "ShaderParameters.usf"
+
+RWStructuredBuffer<float> OutputBuffer;
+
+// Thread group size: 8x8x8
+[numthreads(8, 8, 8)]
+void MainComputeShader(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint Index = DispatchThreadId.x + DispatchThreadId.y * VoxelGridSize.x + DispatchThreadId.z * VoxelGridSize.x * VoxelGridSize.y;
+
+	if (DispatchThreadId.x > VoxelGridSize.x ||
+		DispatchThreadId.y > VoxelGridSize.y ||
+		DispatchThreadId.z > VoxelGridSize.z)
+	{
+		return; // Don't write outside bounds
+	}
+
+	
+	float Output;
+	if(CloudinessThreshold == 0)
+		Output = 0;
+	else {
+
+		float3 WorldPosition = (float3(DispatchThreadId.xyz) * VoxelSize) - Offset;
+		float3 NoisePosition = WorldPosition / NoiseScale;
+		float NoiseVal = SimplexNoise4D(NoisePosition.x, NoisePosition.y, NoisePosition.z, TotalTime);
+		NoiseVal = NoiseVal * 0.5f + 0.5f; //remap 0..1
+
+
+		Output = NoiseVal;
+	}
+
+	OutputBuffer[Index] = Output;
+}

@@ -1,0 +1,109 @@
+﻿#pragma once
+#include "/Engine/Public/Platform.ush"
+#include "ShaderParameters.usf"
+#include "MarchingCubesLookups.usf"
+
+#define INDEX_NONE -1
+
+struct Triangle
+{
+	float3 PosA;
+	float3 PosB;
+	float3 PosC;
+};
+
+AppendStructuredBuffer<Triangle> TriangleBuffer;
+RWStructuredBuffer<float> VoxelData;
+
+RWByteAddressBuffer CounterBuffer;
+
+int PosToIndex(const uint X, const uint Y, const uint Z) {
+	if(X <= VoxelGridSize.x && Y <= VoxelGridSize.y && Z <= VoxelGridSize.z) 
+		return X + Y * (VoxelGridSize.x + 1) + Z * (VoxelGridSize.x + 1) * (VoxelGridSize.y + 1);
+	return INDEX_NONE;
+}
+
+float3 GetPointPosition(const uint X, const uint Y, const uint Z) {
+	return float3(X, Y, Z) * VoxelSize - Offset;
+}
+
+
+float GetMappedValueNormalizedClamped(float InputMin, float InputMax, float Value) {
+	const float Divisor = InputMax - InputMin;
+	if(abs(Divisor) < 0.00001f) {
+		return (Value >= InputMax) ? 1 : 0;
+	}
+
+	return saturate((Value - InputMin) / Divisor);
+}
+
+[numthreads(8, 8, 8)]
+void MainComputeShader(uint3 DispatchThreadId : SV_DispatchThreadID) {
+	if (DispatchThreadId.x >= VoxelGridSize.x ||
+	DispatchThreadId.y >= VoxelGridSize.y ||
+	DispatchThreadId.z >= VoxelGridSize.z)
+	{
+		return; // Don't write outside bounds
+	}
+	uint X = DispatchThreadId.x;
+	uint Y = DispatchThreadId.y;
+	uint Z = DispatchThreadId.z;
+
+	uint OffsetIndices[8];
+	for(int i = 0; i < 8; i++) {
+		const uint3 NewPos = uint3(X, Y, Z) + MarchingCubesOffsets[i];
+		OffsetIndices[i] = PosToIndex(NewPos.x, NewPos.y, NewPos.z);
+	}
+
+	uint LookupPosition = 0;
+	for(int i = 7; i >= 0; i--) {
+		uint Index = OffsetIndices[i];
+		if(Index == INDEX_NONE)
+			LookupPosition = (LookupPosition << 1) | 1u;
+		else
+			LookupPosition = (LookupPosition << 1) | (VoxelData[OffsetIndices[i]] < CloudinessThreshold ? 1u : 0u);
+	}
+
+	float3 Vertices[3];
+	int CurrentIndex = 0;
+	
+	
+	for(int Edge, TriangleIndex = 0; (Edge = TriangleTable[LookupPosition][TriangleIndex]) != -1; TriangleIndex++) {
+
+		const uint2 Points = EdgeVertexIndices[Edge];
+		const uint3 PointA = MarchingCubesOffsets[Points.x] + uint3(X, Y, Z);
+		const uint3 PointB = MarchingCubesOffsets[Points.y] + uint3(X, Y, Z);
+					
+		const float ValueA = OffsetIndices[Points[0]] == INDEX_NONE ? 1.f : VoxelData[OffsetIndices[Points[0]]];
+		const float ValueB = OffsetIndices[Points[1]] == INDEX_NONE ? 1.f : VoxelData[OffsetIndices[Points[1]]];
+
+		const float MinVal = min(ValueA, ValueB);
+		const float MaxVal = max(ValueA, ValueB);
+
+		float Alpha = GetMappedValueNormalizedClamped(MinVal, MaxVal, CloudinessThreshold);
+
+		if(ValueA > ValueB) Alpha = 1 - Alpha;
+
+		Alpha = lerp(0.5f, Alpha, Roundedness);
+					
+		float3 WorldPointA = GetPointPosition(PointA.x, PointA.y, PointA.z);
+		float3 WorldPointB = GetPointPosition(PointB.x, PointB.y, PointB.z);
+
+		float3 TargetLocation = lerp(WorldPointA, WorldPointB, Alpha);
+
+		Vertices[CurrentIndex] = TargetLocation;
+		//Vertices[CurrentIndex] = float3(100, 200, 300) * (CurrentIndex + 1);
+		CurrentIndex++;
+
+		if(CurrentIndex == 3) {
+			CurrentIndex = 0;
+			Triangle ToAppend;
+			ToAppend.PosA = Vertices[0];
+			ToAppend.PosB = Vertices[1];
+			ToAppend.PosC = Vertices[2];
+			
+			TriangleBuffer.Append(ToAppend);
+			CounterBuffer.InterlockedAdd(0, 1);
+		}
+	}
+}
