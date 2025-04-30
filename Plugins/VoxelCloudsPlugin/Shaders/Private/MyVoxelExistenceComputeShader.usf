@@ -20,7 +20,7 @@ RWStructuredBuffer<float> OutputBuffer;
 [numthreads(8, 8, 8)]
 void MainComputeShader(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-	uint Index = DispatchThreadId.x + DispatchThreadId.y * VoxelGridSize.x + DispatchThreadId.z * VoxelGridSize.x * VoxelGridSize.y;
+	uint Index = DispatchThreadId.x + DispatchThreadId.y * (VoxelGridSize.x + 1) + DispatchThreadId.z * (VoxelGridSize.x + 1) * (VoxelGridSize.y + 1);
 
 	if (DispatchThreadId.x > VoxelGridSize.x ||
 		DispatchThreadId.y > VoxelGridSize.y ||

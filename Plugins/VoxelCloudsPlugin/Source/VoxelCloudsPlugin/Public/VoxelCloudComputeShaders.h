@@ -4,7 +4,7 @@
 #include "UniformBuffer.h"
 #include "ShaderParameterStruct.h"
 
-#define VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE FVoxelCloudComputeShaders::FTriangle
+#define VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE float //FVoxelCloudComputeShaders::FTriangle
 
 class FVoxelCloudExistenceComputeShader final : public FGlobalShader
 {

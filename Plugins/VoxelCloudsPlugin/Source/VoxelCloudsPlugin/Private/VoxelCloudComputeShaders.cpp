@@ -62,92 +62,25 @@ void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& R
 			ComputeShaderA,
 			PassParametersA,
 			GroupCount);
-
-		//INITIALIZE SECOND COMPUTE SHADER
-
-		TShaderMapRef<FVoxelCloudsMarchingCubesComputeShader> ComputeShaderB(GetGlobalShaderMap(GMaxRHIFeatureLevel));
-		
-		if (!ComputeShaderB.IsValid())
-		{
-			check(0);
-			return;
-		}
-		FVoxelCloudsMarchingCubesComputeShader::FParameters* PassParametersB = GraphBuilder.AllocParameters<FVoxelCloudsMarchingCubesComputeShader::FParameters>();
-		PassParametersB->Offset = PassParametersA->Offset;
-		PassParametersB->Roundedness = PassParametersA->Roundedness;
-		PassParametersB->CloudinessThreshold = PassParametersA->CloudinessThreshold;
-		PassParametersB->NoiseScale = PassParametersA->NoiseScale;
-		PassParametersB->TotalTime = PassParametersA->TotalTime;
-		PassParametersB->VoxelSize = PassParametersA->VoxelSize;
-		PassParametersB->VoxelGridSize = PassParametersA->VoxelGridSize;
-
-		PassParametersB->VoxelData = PassParametersA->OutputBuffer;
-
-		FRDGBufferRef TriangleBuffer = GraphBuilder.CreateBuffer(
-			FRDGBufferDesc::CreateStructuredDesc(sizeof(VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE), NumVoxels * 5),
-			TEXT("TriangleBuffer"));
-		PassParametersB->TriangleBuffer = GraphBuilder.CreateUAV(TriangleBuffer);
-
-		FRDGBufferRef CounterBuffer = GraphBuilder.CreateBuffer(
-			FRDGBufferDesc::CreateByteAddressDesc(4),
-			TEXT("OutputCounter")
-		);
-		PassParametersB->CounterBuffer = GraphBuilder.CreateUAV(CounterBuffer);
-
-		// Clear counter to zero before dispatch
-		AddClearUAVPass(GraphBuilder, PassParametersB->CounterBuffer, 0);
-
-		GroupCount = FComputeShaderUtils::GetGroupCount(FIntVector(Parameters.VoxelGridSize), FIntVector(8, 8, 8));
-		
-
-		FComputeShaderUtils::AddPass(
-			GraphBuilder,
-			RDG_EVENT_NAME("RunVoxelCloudComputeShaderB"),
-			ComputeShaderB,
-			PassParametersB,
-			GroupCount);
-		
+				
 
 		// Set up GPU readback
 		FRHIGPUBufferReadback* Readback = new FRHIGPUBufferReadback(TEXT("VoxelCloudReadback"));
-		AddEnqueueCopyPass(GraphBuilder, Readback, TriangleBuffer, 0);
-		
-		FRHIGPUBufferReadback* CounterReadback = new FRHIGPUBufferReadback(TEXT("VoxelCloudCounterReadback"));
-		AddEnqueueCopyPass(GraphBuilder, CounterReadback, CounterBuffer, 0);  // Copy 4 bytes from counter buffer
+		AddEnqueueCopyPass(GraphBuilder, Readback, OutputBuffer, 0);
 
-
-		auto RunnerFunc = [CounterReadback, Readback, AsyncCallback](auto&& RunnerFunc) -> void {
-			if (CounterReadback->IsReady())
+		// Now we know how many elements were appended
+		auto RunnerFunc = [Readback, AsyncCallback, NumPoints](auto&& RunnerFunc) -> void {
+			if (Readback->IsReady())
 			{
-				const uint32 NumTriangles = *static_cast<uint32*>(CounterReadback->Lock(0)); // 4 bytes for uint
-				CounterReadback->Unlock();
-				delete CounterReadback;
+				const VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE* DataPtr = static_cast<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE*>(Readback->Lock(0));
+				TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE> OutputData;
+				OutputData.Append(DataPtr, NumPoints);
+				Readback->Unlock();
 
-				// Now we know how many elements were appended
-				auto FinalReader = [Readback, NumTriangles, AsyncCallback](auto&& FinalReader) -> void {
-					if (Readback->IsReady())
-					{
-						const VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE* DataPtr = static_cast<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE*>(Readback->Lock(NumTriangles * sizeof(VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE)));
-						TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE> OutputData;
-						OutputData.Append(DataPtr, NumTriangles);
-						Readback->Unlock();
+				delete Readback;
 
-						delete Readback;
-
-						AsyncTask(ENamedThreads::GameThread, [AsyncCallback, OutputData = MoveTemp(OutputData)]() {
-							AsyncCallback(OutputData);
-						});
-					}
-					else
-					{
-						AsyncTask(ENamedThreads::ActualRenderingThread, [FinalReader]() {
-							FinalReader(FinalReader);
-						});
-					}
-				};
-
-				AsyncTask(ENamedThreads::ActualRenderingThread, [FinalReader]() {
-					FinalReader(FinalReader);
+				AsyncTask(ENamedThreads::GameThread, [AsyncCallback, OutputData = MoveTemp(OutputData)]() {
+					AsyncCallback(OutputData);
 				});
 			}
 			else
@@ -160,7 +93,7 @@ void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& R
 
 		AsyncTask(ENamedThreads::ActualRenderingThread, [RunnerFunc]() {
 			RunnerFunc(RunnerFunc);
-		});
+			});
 	}
 
 	GraphBuilder.Execute();
