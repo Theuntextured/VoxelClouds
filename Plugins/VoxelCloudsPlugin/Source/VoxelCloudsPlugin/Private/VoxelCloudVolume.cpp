@@ -40,18 +40,10 @@ void AVoxelCloudVolume::OnConstruction(const FTransform& Transform) {
 }
 
 void AVoxelCloudVolume::UpdateCloudRendererMesh() {
-	if(IsProcessing) return;
-	IsProcessing = true;
-	
 	const auto LocalBounds = Volume->CalcLocalBounds().GetBox();
 	const auto ExtentFromMin = LocalBounds.GetExtent() * 2;
 	
 	FUintVector3 VoxelCount(ExtentFromMin / VoxelSize);
-	
-	if(VoxelCount.X <= 0 || VoxelCount.Y <= 0 || VoxelCount.Z <= 0) {
-		CloudRenderer->UpdateMesh({},{});
-		return;
-	}
 	
 	const FVector3f Offset = FVector3f(VoxelCount) * VoxelSize * .5f;
 			
@@ -64,14 +56,7 @@ void AVoxelCloudVolume::UpdateCloudRendererMesh() {
 	ShaderParameters.Offset = Offset;
 	ShaderParameters.Roundedness = Roundedness;
 
-	FVoxelCloudComputeShaders::Dispatch(
-		ShaderParameters,
-		[this, ShaderParameters](TArray<FVector3f> Vertices, TArray<uint32> Indices)
-		{
-			CloudRenderer->UpdateMesh(Vertices, Indices);
-			IsProcessing = false;
-		}
-	);
+	CloudRenderer->UpdateMesh(ShaderParameters);
 }
 
 void AVoxelCloudVolume::UpdateCloudRendererBounds() const {

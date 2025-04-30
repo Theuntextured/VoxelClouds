@@ -42,6 +42,4 @@ public:
 private:
 	void UpdateCloudRendererMesh();
 	void UpdateCloudRendererBounds() const;
-
-	bool IsProcessing = false;
 };

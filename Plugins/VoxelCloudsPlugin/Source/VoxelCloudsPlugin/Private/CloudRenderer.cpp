@@ -117,6 +117,25 @@ void UCloudRendererComponent::UpdateMesh(const TArray<FVector3f>& NewVerts, cons
 	MarkRenderDynamicDataDirty();
     MarkRenderStateDirty();
 }
+void UCloudRendererComponent::UpdateMesh(const FVoxelCloudExistenceComputeShader::FParameters& Parameters) {
+    if(IsProcessing) return;
+    IsProcessing = true;
+	
+    if(Parameters.VoxelGridSize.X <= 0 || Parameters.VoxelGridSize.Y <= 0 || Parameters.VoxelGridSize.Z <= 0) {
+        UpdateMesh({},{});
+        return;
+    }
+			
+    FVoxelCloudComputeShaders::Dispatch(
+        Parameters,
+        [this, Parameters](TArray<FVector3f> Vertices, TArray<uint32> Indices)
+        {
+            UpdateMesh(Vertices, Indices);
+            IsProcessing = false;
+        }
+    );
+}
+
 void UCloudRendererComponent::SetBounds(const FBoxSphereBounds& NewBounds) {
     Bounds = NewBounds;
     MarkRenderTransformDirty();
