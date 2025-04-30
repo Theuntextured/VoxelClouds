@@ -4,7 +4,7 @@
 #include "UniformBuffer.h"
 #include "ShaderParameterStruct.h"
 
-#define VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE float //FVoxelCloudComputeShaders::FTriangle
+#define VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE FVector3f
 
 class FVoxelCloudExistenceComputeShader final : public FGlobalShader
 {
@@ -43,15 +43,6 @@ class FVoxelCloudsMarchingCubesComputeShader final : public FGlobalShader
 class FVoxelCloudComputeShaders
 {
 public:
-	struct alignas(16) FTriangle
-	{
-		FVector3f PosA;
-
-		FVector3f PosB;
-
-		FVector3f PosC;
-	};
-
 	// Dispatches this shader. Can be called from any thread
 	static void Dispatch(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE>)> AsyncCallback);
 
@@ -59,6 +50,3 @@ private:
 	static void DispatchGameThread(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE>)> AsyncCallback);
 	static void DispatchRenderThread(FRHICommandListImmediate& RHICmdList, FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE>)> AsyncCallback);
 };
-
-IMPLEMENT_GLOBAL_SHADER(FVoxelCloudsMarchingCubesComputeShader, "/VoxelCloudsPluginShaders/MarchingCubesComputeShader.usf", "MainComputeShader", SF_Compute);
-IMPLEMENT_GLOBAL_SHADER(FVoxelCloudExistenceComputeShader, "/VoxelCloudsPluginShaders/MyVoxelExistenceComputeShader.usf", "MainComputeShader", SF_Compute);

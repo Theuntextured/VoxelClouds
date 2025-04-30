@@ -5,105 +5,89 @@
 
 #define INDEX_NONE -1
 
-struct Triangle
-{
-	float3 PosA;
-	float3 PosB;
-	float3 PosC;
-};
-
-AppendStructuredBuffer<Triangle> TriangleBuffer;
+RWStructuredBuffer<float3> TriangleBuffer;
 RWStructuredBuffer<float> VoxelData;
 
 RWByteAddressBuffer CounterBuffer;
 
-int PosToIndex(const uint X, const uint Y, const uint Z) {
-	if(X <= VoxelGridSize.x && Y <= VoxelGridSize.y && Z <= VoxelGridSize.z) 
-		return X + Y * (VoxelGridSize.x + 1) + Z * (VoxelGridSize.x + 1) * (VoxelGridSize.y + 1);
+int PosToIndex(const uint x, const uint y, const uint z) {
+	if(x <= VoxelGridSize.x && y <= VoxelGridSize.y && z <= VoxelGridSize.z) 
+		return x + y * (VoxelGridSize.x + 1) + z * (VoxelGridSize.x + 1) * (VoxelGridSize.y + 1);
 	return INDEX_NONE;
-}
-
-float3 GetPointPosition(const uint X, const uint Y, const uint Z) {
-	return float3(X, Y, Z) * VoxelSize - Offset;
-}
-
-
+};
+float3 GetPointPosition(const uint x, const uint y, const uint z) {
+	return float3(x, y, z) * VoxelSize - Offset;
+};
 float GetMappedValueNormalizedClamped(float InputMin, float InputMax, float Value) {
 	const float Divisor = InputMax - InputMin;
 	if(abs(Divisor) < 0.00001f) {
 		return (Value >= InputMax) ? 1 : 0;
 	}
-
 	return saturate((Value - InputMin) / Divisor);
-}
+};
+float GetValueAtIndex(const int Index)
+{
+	if(Index == INDEX_NONE)
+		return BorderValue;
+	return VoxelData[Index];
+};
 
 [numthreads(8, 8, 8)]
-void MainComputeShader(uint3 DispatchThreadId : SV_DispatchThreadID) {
-	if (DispatchThreadId.x >= VoxelGridSize.x ||
-	DispatchThreadId.y >= VoxelGridSize.y ||
-	DispatchThreadId.z >= VoxelGridSize.z)
-	{
-		return; // Don't write outside bounds
-	}
-	uint X = DispatchThreadId.x;
-	uint Y = DispatchThreadId.y;
-	uint Z = DispatchThreadId.z;
+void MainComputeShader(uint3 CurrentGridPosition : SV_DispatchThreadID) {
+	if(CurrentGridPosition.x >= VoxelGridSize.x || CurrentGridPosition.y >= VoxelGridSize.y || CurrentGridPosition.z >= VoxelGridSize.z)
+		return;
+/*
+	uint TriangleIndex;
+	CounterBuffer.InterlockedAdd(0, 3, TriangleIndex);
+			
+	TriangleBuffer[TriangleIndex + 0] = float3(1,2,3);
+	TriangleBuffer[TriangleIndex + 1] = float3(4,5,6);
+	TriangleBuffer[TriangleIndex + 2] = float3(7,8,9);
+	return;*/
 
-	uint OffsetIndices[8];
+	
+	int OffsetIndices[8];
 	for(int i = 0; i < 8; i++) {
-		const uint3 NewPos = uint3(X, Y, Z) + MarchingCubesOffsets[i];
+		const uint3 NewPos = MarchingCubesOffsets[i] + CurrentGridPosition;
 		OffsetIndices[i] = PosToIndex(NewPos.x, NewPos.y, NewPos.z);
 	}
+	//Calculate lookup index for triangles
+	uint LookupIndex = 0;
+	for(int i = 0; i < 8; i++)
+		LookupIndex |= (GetValueAtIndex(OffsetIndices[i]) < CloudinessThreshold ? 1u : 0u) << i;
 
-	uint LookupPosition = 0;
-	for(int i = 7; i >= 0; i--) {
-		uint Index = OffsetIndices[i];
-		if(Index == INDEX_NONE)
-			LookupPosition = (LookupPosition << 1) | 1u;
-		else
-			LookupPosition = (LookupPosition << 1) | (VoxelData[OffsetIndices[i]] < CloudinessThreshold ? 1u : 0u);
-	}
-
-	float3 Vertices[3];
-	int CurrentIndex = 0;
+	uint CurrentIndex = 0;
+	float3 VerticesToAdd[3];
 	
-	
-	for(int Edge, TriangleIndex = 0; (Edge = TriangleTable[LookupPosition][TriangleIndex]) != -1; TriangleIndex++) {
+	//Cycle through triangle points and calculate their actual 3d position
+	for(int Edge, Index = 0; (Edge = TriangleTable[LookupIndex][Index]) != INDEX_NONE; Index++) {
+		uint2 PointIndices = EdgeVertexIndices[Edge];
 
-		const uint2 Points = EdgeVertexIndices[Edge];
-		const uint3 PointA = MarchingCubesOffsets[Points.x] + uint3(X, Y, Z);
-		const uint3 PointB = MarchingCubesOffsets[Points.y] + uint3(X, Y, Z);
-					
-		const float ValueA = OffsetIndices[Points[0]] == INDEX_NONE ? 1.f : VoxelData[OffsetIndices[Points[0]]];
-		const float ValueB = OffsetIndices[Points[1]] == INDEX_NONE ? 1.f : VoxelData[OffsetIndices[Points[1]]];
+		uint3 GridPointA = MarchingCubesOffsets[PointIndices.x] + CurrentGridPosition;
+		uint3 GridPointB = MarchingCubesOffsets[PointIndices.y] + CurrentGridPosition;
 
-		const float MinVal = min(ValueA, ValueB);
-		const float MaxVal = max(ValueA, ValueB);
+		float3 WorldPositionA = GetPointPosition(GridPointA.x, GridPointA.y, GridPointA.z);
+		float3 WorldPositionB = GetPointPosition(GridPointB.x, GridPointB.y, GridPointB.z);
 
-		float Alpha = GetMappedValueNormalizedClamped(MinVal, MaxVal, CloudinessThreshold);
+		float ValueA = GetValueAtIndex(PosToIndex(GridPointA.x, GridPointA.y, GridPointA.z));
+		float ValueB = GetValueAtIndex(PosToIndex(GridPointB.x, GridPointB.y, GridPointB.z));
 
-		if(ValueA > ValueB) Alpha = 1 - Alpha;
+		float Alpha = GetMappedValueNormalizedClamped(ValueA, ValueB, CloudinessThreshold);
 
 		Alpha = lerp(0.5f, Alpha, Roundedness);
-					
-		float3 WorldPointA = GetPointPosition(PointA.x, PointA.y, PointA.z);
-		float3 WorldPointB = GetPointPosition(PointB.x, PointB.y, PointB.z);
 
-		float3 TargetLocation = lerp(WorldPointA, WorldPointB, Alpha);
-
-		Vertices[CurrentIndex] = TargetLocation;
-		//Vertices[CurrentIndex] = float3(100, 200, 300) * (CurrentIndex + 1);
-		CurrentIndex++;
-
+		float3 VertexPosition = lerp(WorldPositionA, WorldPositionB, Alpha);
+		VerticesToAdd[CurrentIndex++] = VertexPosition;
+		
 		if(CurrentIndex == 3) {
 			CurrentIndex = 0;
-			Triangle ToAppend;
-			ToAppend.PosA = Vertices[0];
-			ToAppend.PosB = Vertices[1];
-			ToAppend.PosC = Vertices[2];
 			
-			TriangleBuffer.Append(ToAppend);
-			CounterBuffer.InterlockedAdd(0, 1);
+			uint TriangleIndex;
+			CounterBuffer.InterlockedAdd(0, 3, TriangleIndex);
+			
+			TriangleBuffer[TriangleIndex + 0] = VerticesToAdd[0];
+			TriangleBuffer[TriangleIndex + 1] = VerticesToAdd[1];
+			TriangleBuffer[TriangleIndex + 2] = VerticesToAdd[2];
 		}
 	}
 }
