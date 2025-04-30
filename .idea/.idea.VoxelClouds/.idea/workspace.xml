@@ -12,13 +12,12 @@
   <component name="ChangeListManager">
     <list default="true" id="aa8c0014-63bc-432e-b131-f8de99144b0e" name="Changes" comment="init">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.VoxelClouds/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.VoxelClouds/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/CloudMaterial.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/CloudMaterial.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/TestMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TestMap.umap" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/MarchingCubesComputeShader.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/MarchingCubesComputeShader.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/ShaderParameters.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/ShaderParameters.usf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Private/VoxelCloudComputeShaders.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Private/VoxelCloudComputeShaders.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Private/VoxelCloudVolume.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Private/VoxelCloudVolume.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Public/VoxelCloudComputeShaders.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Public/VoxelCloudComputeShaders.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Public/VoxelCloudVolume.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Public/VoxelCloudVolume.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -141,7 +140,7 @@
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="cidr-memory-view://35" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://39" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.3/Engine/Source/Runtime/Core/Private/Logging/StructuredLog.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.3/Engine/Source/Runtime/Core/Public/Containers/Array.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.3/Engine/Source/Runtime/Core/Public/Containers/ContainerAllocationPolicies.h" root0="FORCE_HIGHLIGHTING" />
@@ -349,7 +348,7 @@
       <workItem from="1745917097502" duration="3625000" />
       <workItem from="1745938044133" duration="31203000" />
       <workItem from="1746005134164" duration="6608000" />
-      <workItem from="1746012291603" duration="15016000" />
+      <workItem from="1746012291603" duration="16611000" />
     </task>
     <servers />
   </component>

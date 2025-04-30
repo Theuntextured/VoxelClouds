@@ -66,13 +66,8 @@ void AVoxelCloudVolume::UpdateCloudRendererMesh() {
 
 	FVoxelCloudComputeShaders::Dispatch(
 		ShaderParameters,
-		[this, ShaderParameters](TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE> Vertices)
+		[this, ShaderParameters](TArray<FVector3f> Vertices, TArray<uint32> Indices)
 		{
-			TArray<uint32> Indices;
-			Indices.Reserve(Vertices.Num());
-			for(int32 i = 0; i < Vertices.Num(); i++)
-				Indices.Add(i);
-			
 			CloudRenderer->UpdateMesh(Vertices, Indices);
 			IsProcessing = false;
 		}

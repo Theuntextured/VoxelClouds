@@ -5,10 +5,17 @@
 
 #define INDEX_NONE -1
 
-RWStructuredBuffer<float3> TriangleBuffer;
+//INPUT
 RWStructuredBuffer<float> VoxelData;
 
+
+//OUTPUT
+RWStructuredBuffer<float3> TriangleBuffer;
+RWStructuredBuffer<uint> IndexBuffer;
+
 RWByteAddressBuffer CounterBuffer;
+
+//HELPER FUNCTIONS
 
 int PosToIndex(const uint x, const uint y, const uint z) {
 	if(x <= VoxelGridSize.x && y <= VoxelGridSize.y && z <= VoxelGridSize.z) 
@@ -28,22 +35,16 @@ float GetMappedValueNormalizedClamped(float InputMin, float InputMax, float Valu
 float GetValueAtIndex(const int Index)
 {
 	if(Index == INDEX_NONE)
-		return BorderValue;
+		return 1.f;
 	return VoxelData[Index];
 };
+
+//MAIN COMPUTE SHADER
 
 [numthreads(8, 8, 8)]
 void MainComputeShader(uint3 CurrentGridPosition : SV_DispatchThreadID) {
 	if(CurrentGridPosition.x >= VoxelGridSize.x || CurrentGridPosition.y >= VoxelGridSize.y || CurrentGridPosition.z >= VoxelGridSize.z)
 		return;
-/*
-	uint TriangleIndex;
-	CounterBuffer.InterlockedAdd(0, 3, TriangleIndex);
-			
-	TriangleBuffer[TriangleIndex + 0] = float3(1,2,3);
-	TriangleBuffer[TriangleIndex + 1] = float3(4,5,6);
-	TriangleBuffer[TriangleIndex + 2] = float3(7,8,9);
-	return;*/
 
 	
 	int OffsetIndices[8];
@@ -85,9 +86,12 @@ void MainComputeShader(uint3 CurrentGridPosition : SV_DispatchThreadID) {
 			uint TriangleIndex;
 			CounterBuffer.InterlockedAdd(0, 3, TriangleIndex);
 			
-			TriangleBuffer[TriangleIndex + 0] = VerticesToAdd[0];
+			TriangleBuffer[TriangleIndex + 0] = VerticesToAdd[2];
 			TriangleBuffer[TriangleIndex + 1] = VerticesToAdd[1];
-			TriangleBuffer[TriangleIndex + 2] = VerticesToAdd[2];
+			TriangleBuffer[TriangleIndex + 2] = VerticesToAdd[0];
+			IndexBuffer[TriangleIndex + 0] = TriangleIndex + 0;
+			IndexBuffer[TriangleIndex + 1] = TriangleIndex + 1;
+			IndexBuffer[TriangleIndex + 2] = TriangleIndex + 2;
 		}
 	}
 }

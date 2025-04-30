@@ -9,7 +9,7 @@ DECLARE_CYCLE_STAT(TEXT("Voxel Cloud Compute Shader"), STAT_VoxelCloudComputeSha
 IMPLEMENT_GLOBAL_SHADER(FVoxelCloudsMarchingCubesComputeShader, "/VoxelCloudsPluginShaders/MarchingCubesComputeShader.usf", "MainComputeShader", SF_Compute);
 IMPLEMENT_GLOBAL_SHADER(FVoxelCloudExistenceComputeShader, "/VoxelCloudsPluginShaders/MyVoxelExistenceComputeShader.usf", "MainComputeShader", SF_Compute);
 
-void FVoxelCloudComputeShaders::Dispatch(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE>)> AsyncCallback) {
+void FVoxelCloudComputeShaders::Dispatch(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback) {
 	if (IsInRenderingThread()) {
 		FVoxelCloudExistenceComputeShader::FParameters OutParams = Parameters;
 		DispatchRenderThread(GetImmediateCommandList_ForRenderCommand(), OutParams, AsyncCallback);
@@ -19,7 +19,7 @@ void FVoxelCloudComputeShaders::Dispatch(const FVoxelCloudExistenceComputeShader
 }
 
 void FVoxelCloudComputeShaders::DispatchGameThread(const FVoxelCloudExistenceComputeShader::FParameters& Parameters,
-	TFunction<void(TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE>)> AsyncCallback) {
+	TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback) {
 	ENQUEUE_RENDER_COMMAND(SceneDrawCompletion)(
 		[Parameters, AsyncCallback](FRHICommandListImmediate& RHICmdList)
 		{
@@ -29,7 +29,7 @@ void FVoxelCloudComputeShaders::DispatchGameThread(const FVoxelCloudExistenceCom
 }
 
 
-void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& RHICmdList, FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE>)> AsyncCallback)
+void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& RHICmdList, FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback)
 {
 	FRDGBuilder GraphBuilder(RHICmdList);
 
@@ -92,16 +92,20 @@ void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& R
 		FRDGBufferRef TriangleBuffer = GraphBuilder.CreateBuffer(
 			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector3f), NumVoxels * 5 * 3),
 			TEXT("TriangleBuffer"));
-
 		PassParametersB->TriangleBuffer = GraphBuilder.CreateUAV(TriangleBuffer);
 
-		FRDGBufferDesc CounterDesc = FRDGBufferDesc::CreateBufferDesc(sizeof(uint32), 1); // Only 1 uint needed for counter
-		//CounterDesc.Usage = EBufferUsageFlags::ByteAddressBuffer | EBufferUsageFlags::UnorderedAccess;
+		FRDGBufferRef IndexBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), NumVoxels * 5 * 3),
+			TEXT("IndexBuffer"));
+		PassParametersB->IndexBuffer = GraphBuilder.CreateUAV(IndexBuffer);
+		
+
+		FRDGBufferDesc CounterDesc = FRDGBufferDesc::CreateBufferDesc(sizeof(uint32), 1);
 		FRDGBufferRef CounterBuffer = GraphBuilder.CreateBuffer(CounterDesc, TEXT("TriangleCounter"));
 		PassParametersB->CounterBuffer = GraphBuilder.CreateUAV(CounterBuffer, PF_R32_UINT);
-		
 		AddClearUAVPass(GraphBuilder, PassParametersB->CounterBuffer, 0);
 
+		//ADD PASS
 		GroupCount = FComputeShaderUtils::GetGroupCount(FIntVector(Parameters.VoxelGridSize), FIntVector(8, 8, 8));
 
 		FComputeShaderUtils::AddPass(
@@ -111,31 +115,41 @@ void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& R
 			PassParametersB,
 			GroupCount);
 		
-
-		// Set up GPU readback
+		////////////////
+		//GPU READBACK//
+		////////////////
+		
 		FRHIGPUBufferReadback* VertexReadback = new FRHIGPUBufferReadback(TEXT("VertexReadback"));
 		AddEnqueueCopyPass(GraphBuilder, VertexReadback, TriangleBuffer, 0);
+		FRHIGPUBufferReadback* IndexReadback = new FRHIGPUBufferReadback(TEXT("IndexReadback"));
+		AddEnqueueCopyPass(GraphBuilder, IndexReadback, IndexBuffer, 0);
 		FRHIGPUBufferReadback* CounterReadback = new FRHIGPUBufferReadback(TEXT("CounterReadback"));
 		AddEnqueueCopyPass(GraphBuilder, CounterReadback, CounterBuffer, 0);
 
 
 		// Now we know how many elements were appended
-		auto RunnerFunc = [VertexReadback, CounterReadback, AsyncCallback](auto&& RunnerFunc) -> void {
-			if (VertexReadback->IsReady() && CounterReadback->IsReady())
+		auto RunnerFunc = [VertexReadback, CounterReadback, IndexReadback, AsyncCallback](auto&& RunnerFunc) -> void {
+			if (VertexReadback->IsReady() && CounterReadback->IsReady() && IndexReadback->IsReady())
 			{
 				uint32 Count = *static_cast<uint32*>(CounterReadback->Lock(0));
 				CounterReadback->Unlock();
 								
-				const VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE* DataPtr = static_cast<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE*>(VertexReadback->Lock(0));
-				TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE> OutputData;
+				const FVector3f* DataPtr = static_cast<FVector3f*>(VertexReadback->Lock(0));
+				TArray<FVector3f> OutputData;
 				OutputData.Append(DataPtr, Count);
 				VertexReadback->Unlock();
 
+				const uint32* IndexData = static_cast<uint32*>(IndexReadback->Lock(0));
+				TArray<uint32> OutIndices;
+				OutIndices.Append(IndexData, Count);
+				IndexReadback->Unlock();
+
+				delete IndexReadback;
 				delete VertexReadback;
 				delete CounterReadback;
 
-				AsyncTask(ENamedThreads::GameThread, [AsyncCallback, OutputData = MoveTemp(OutputData)]() {
-					AsyncCallback(OutputData);
+				AsyncTask(ENamedThreads::GameThread, [AsyncCallback, OutputData = MoveTemp(OutputData), OutputIndices = MoveTemp(OutIndices)]() {
+					AsyncCallback(OutputData, OutputIndices);
 				});
 			}
 			else

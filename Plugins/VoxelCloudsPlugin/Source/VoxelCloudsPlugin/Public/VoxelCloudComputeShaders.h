@@ -4,7 +4,6 @@
 #include "UniformBuffer.h"
 #include "ShaderParameterStruct.h"
 
-#define VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE FVector3f
 
 class FVoxelCloudExistenceComputeShader final : public FGlobalShader
 {
@@ -36,6 +35,7 @@ class FVoxelCloudsMarchingCubesComputeShader final : public FGlobalShader
 		SHADER_PARAMETER(float, Roundedness)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float>, VoxelData)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<FVector3f>, TriangleBuffer)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, IndexBuffer)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWByteAddressBuffer, CounterBuffer)
 	END_SHADER_PARAMETER_STRUCT()
 };
@@ -44,9 +44,9 @@ class FVoxelCloudComputeShaders
 {
 public:
 	// Dispatches this shader. Can be called from any thread
-	static void Dispatch(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE>)> AsyncCallback);
+	static void Dispatch(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback);
 
 private:
-	static void DispatchGameThread(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE>)> AsyncCallback);
-	static void DispatchRenderThread(FRHICommandListImmediate& RHICmdList, FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<VOXEL_CLOUD_COMPUTE_SHADER_OUTPUT_TYPE>)> AsyncCallback);
+	static void DispatchGameThread(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback);
+	static void DispatchRenderThread(FRHICommandListImmediate& RHICmdList, FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback);
 };
