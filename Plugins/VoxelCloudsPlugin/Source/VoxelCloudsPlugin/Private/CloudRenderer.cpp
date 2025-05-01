@@ -7,14 +7,12 @@ class FVoxelCloudSceneProxy : public FPrimitiveSceneProxy
     const TArray<FVector3f> Vertices;
     const TArray<uint32> Indices;
     const FMaterialRenderProxy* MaterialProxy;
-    UCloudRendererComponent* OwningComponent;
 
 public:
     FVoxelCloudSceneProxy(UCloudRendererComponent* Component)
         : FPrimitiveSceneProxy(Component)
         , Vertices(Component->Vertices)
         , Indices(Component->Indices)
-        , OwningComponent(Component)
     {
         if (Component->GetMaterial(0) && Component->GetMaterial(0)->GetRenderProxy())
             MaterialProxy = Component->GetMaterial(0)->GetRenderProxy();
@@ -30,7 +28,6 @@ public:
     ) const override
     {
         if(!MaterialProxy) return;
-        const UE::Math::TTransform<float> WorldTransform = UE::Math::TTransform<float>(OwningComponent->GetComponentTransform());
         for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ++ViewIndex)
         {
             if (VisibilityMap & (1u << ViewIndex))
@@ -40,13 +37,7 @@ public:
                 {
                     TRACE_CPUPROFILER_EVENT_SCOPE(Gather Cloud Vertices);
                     for (int32 i = 0; i < Vertices.Num(); ++i)
-                    {
-                        MeshBuilder.AddVertex(
-                            FDynamicMeshVertex(
-                                WorldTransform.TransformPosition(Vertices[i])
-                                )
-                        );
-                    }
+                        MeshBuilder.AddVertex(FDynamicMeshVertex(Vertices[i]));
                 }
                 {
                     TRACE_CPUPROFILER_EVENT_SCOPE(Gather Cloud Triangles);
@@ -57,7 +48,7 @@ public:
                     TRACE_CPUPROFILER_EVENT_SCOPE(Get Cloud Mesh);
                     // Draw
                     MeshBuilder.GetMesh(
-                        FMatrix::Identity,
+                        GetLocalToWorld(),
                         MaterialProxy,
                         SDPG_World,
                         false, false, false,
