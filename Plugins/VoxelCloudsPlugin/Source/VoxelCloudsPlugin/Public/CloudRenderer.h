@@ -1,5 +1,4 @@
-﻿
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "VoxelCloudComputeShaders.h"
@@ -32,3 +31,4 @@ protected:
 	FBoxSphereBounds Bounds;
 	bool IsProcessing = false;
 };
+
