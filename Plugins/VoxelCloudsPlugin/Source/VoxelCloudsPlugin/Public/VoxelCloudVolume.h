@@ -38,6 +38,9 @@ public:
 	float Cloudiness = 0.5f;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Voxel Clouds", meta = (ClampMin = "0", ClampMax = "1", UIMin = "0", UIMax = "1"))
 	float Roundedness = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Voxel Clouds")
+	bool RealTimeUpdate = false;
 	
 private:
 	void UpdateCloudRendererMesh();

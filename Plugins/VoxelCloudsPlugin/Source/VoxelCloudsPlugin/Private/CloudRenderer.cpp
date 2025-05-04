@@ -6,6 +6,7 @@
 
 FPrimitiveSceneProxy* UCloudRendererComponent::CreateSceneProxy()
 {
+	if(Vertices.IsEmpty() || Indices.IsEmpty()) return nullptr;
     return new FVoxelCloudSceneProxy(this);
 }
 

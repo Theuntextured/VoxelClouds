@@ -40,6 +40,7 @@ void AVoxelCloudVolume::OnConstruction(const FTransform& Transform) {
 }
 
 void AVoxelCloudVolume::UpdateCloudRendererMesh() {
+	if(!RealTimeUpdate) return;
 	const auto LocalBounds = Volume->CalcLocalBounds().GetBox();
 	const auto ExtentFromMin = LocalBounds.GetExtent() * 2;
 	
