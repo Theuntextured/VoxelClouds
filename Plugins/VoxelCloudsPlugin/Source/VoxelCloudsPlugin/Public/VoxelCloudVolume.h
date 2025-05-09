@@ -40,7 +40,7 @@ public:
 	float Roundedness = 0.5f;
 
 	UPROPERTY(EditAnywhere, Category = "Voxel Clouds")
-	bool RealTimeUpdate = false;
+	bool RealTime = false;
 	
 private:
 	void UpdateCloudRendererMesh();

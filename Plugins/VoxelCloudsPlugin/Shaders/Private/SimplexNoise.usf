@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "/Engine/Public/Platform.ush"
+#include "Common.usf"
 
 
 
@@ -182,4 +183,42 @@ float SimplexNoise4D(float x, float y, float z, float w)
 
 	// Sum up and scale the result to cover the range [-1,1]
 	return 27.0f * (n0 + n1 + n2 + n3 + n4);
+}
+
+float NormalizedSimplexNoise4D(float x, float y, float z, float w)
+{
+	return SimplexNoise4D(x, y, z, w) * 0.5f + 0.5f;
+}
+
+float NormalizedSimplexNoise4D(float4 Position)
+{
+	return NormalizedSimplexNoise4D(Position.x, Position.y, Position.z, Position.w);
+}
+
+float NormalizedSimplexNoise4D(float3 Position, float W)
+{
+	return NormalizedSimplexNoise4D(Position.x, Position.y, Position.z, W);
+}
+
+float MultiLayerSimplexNoise4D(float3 Position, float W, uint Iterations, float AmplitudeScalePerIter, float FrequencyScalePerIter)
+{
+	float OutValue = 0.0;
+	float CurrentAmplitude = 1.0;
+	float Multiplier = 0;
+
+	for (uint i = 0; i < Iterations; i++)
+	{
+		OutValue += SimplexNoise4D(UNPACK_FLOAT_3(Position), W) * CurrentAmplitude;
+		Multiplier += CurrentAmplitude;
+		CurrentAmplitude *= AmplitudeScalePerIter;
+		Position *= FrequencyScalePerIter;
+		W *= FrequencyScalePerIter;
+	}
+
+	return OutValue / Multiplier;
+}
+
+float NormalizedMultiLayerSimplexNoise4D(float3 Position, float W, uint Iterations, float AmplitudeScalePerIter, float FrequencyScalePerIter)
+{
+	return MultiLayerSimplexNoise4D(Position, W, Iterations, AmplitudeScalePerIter, FrequencyScalePerIter) * 0.5f + 0.5f;
 }

@@ -1,0 +1,9 @@
+﻿#pragma once
+#include "ShaderParameters.usf"
+#include "SimplexNoise.usf"
+
+float CumulusCloud(float3 Position)
+{
+	Position.z *= 1.5;
+	return NormalizedMultiLayerSimplexNoise4D(Position, TotalTime, 3u, 0.1, 3);
+}

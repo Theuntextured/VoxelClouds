@@ -40,7 +40,7 @@ void AVoxelCloudVolume::OnConstruction(const FTransform& Transform) {
 }
 
 void AVoxelCloudVolume::UpdateCloudRendererMesh() {
-	if(!RealTimeUpdate) return;
+	if(!RealTime) return;
 	const auto LocalBounds = Volume->CalcLocalBounds().GetBox();
 	const auto ExtentFromMin = LocalBounds.GetExtent() * 2;
 	
@@ -52,7 +52,7 @@ void AVoxelCloudVolume::UpdateCloudRendererMesh() {
 	ShaderParameters.VoxelGridSize = VoxelCount;
 	ShaderParameters.VoxelSize = VoxelSize;
 	ShaderParameters.TotalTime = TotalTime;
-	ShaderParameters.CloudinessThreshold = Cloudiness;
+	ShaderParameters.CloudinessThreshold = 1 - Cloudiness;
 	ShaderParameters.NoiseScale = NoiseScale;
 	ShaderParameters.Offset = Offset;
 	ShaderParameters.Roundedness = Roundedness;

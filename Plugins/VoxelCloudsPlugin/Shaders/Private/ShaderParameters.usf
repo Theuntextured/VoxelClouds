@@ -1,7 +1,9 @@
-﻿uint3 VoxelGridSize;
+﻿#pragma once
+
+uint3 VoxelGridSize;
 float3 Offset;
 float VoxelSize;
 float TotalTime;
-float CloudinessThreshold;
+float CloudinessThreshold; //1 - Cloudiness
 float NoiseScale;
 float Roundedness;

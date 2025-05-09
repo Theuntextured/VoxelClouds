@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "/Engine/Public/Platform.ush"
-#include "SimplexNoise.usf"
+#include "CloudTypes.usf"
 
 //#include "/Engine/Private/Common.ush"
 
@@ -29,6 +29,8 @@ void MainComputeShader(uint3 DispatchThreadId : SV_DispatchThreadID)
 		return; // Don't write outside bounds
 	}
 
+	float3 NormalizedPosition = float3(DispatchThreadId) / float3(VoxelGridSize - int3(1, 1, 1));
+
 	
 	float Output;
 	if(CloudinessThreshold == 0)
@@ -37,12 +39,13 @@ void MainComputeShader(uint3 DispatchThreadId : SV_DispatchThreadID)
 
 		float3 WorldPosition = (float3(DispatchThreadId.xyz) * VoxelSize) - Offset;
 		float3 NoisePosition = WorldPosition / NoiseScale;
-		float NoiseVal = SimplexNoise4D(NoisePosition.x, NoisePosition.y, NoisePosition.z, TotalTime);
-		NoiseVal = NoiseVal * 0.5f + 0.5f; //remap 0..1
+		float NoiseVal = NormalizedSimplexNoise4D(NoisePosition * 0.1, TotalTime * 0.01);
+		float CloudVal = CumulusCloud(NoisePosition);
 
-
-		Output = NoiseVal;
+		float Mult = SmoothActivationCoefficientNorm(NormalizedPosition.z, .4);
+		
+		Output = CloudVal * Mult * BetterSmoothStep(NoiseVal, 1 - CloudinessThreshold, .5f);
 	}
-
+	
 	OutputBuffer[Index] = Output;
 }

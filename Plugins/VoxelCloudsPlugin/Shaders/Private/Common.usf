@@ -1,0 +1,29 @@
+﻿#pragma once
+
+#define UNPACK_FLOAT_3(Vec) Vec.x, Vec.y, Vec.z
+#define UNPACK_FLOAT_4(Vec) Vec.x, Vec.y, Vec.z, Vec.w
+#define UNPACK_FLOAT_2(Vec) Vec.x, Vec.y
+
+float SmoothActivationCoefficient(float Pos, float Min, float Max, float Power)
+{
+	Pos = (Pos - Min) / (Max - Min);
+	return saturate(pow(4 * Pos * (1 - Pos), Power));
+}
+
+float SmoothActivationCoefficientNorm(float Pos, float Power)
+{
+	return saturate(pow(4 * Pos * (1 - Pos), Power));
+}
+
+float MySmoothStep(float X)
+{
+	if (X < 0.0f) return 0.0f;
+	if (X > 1.0f) return 1.0f;
+
+	return X * X * X * (X * (6 * X - 15) + 10);
+}
+
+float BetterSmoothStep(float X, float MidpointPos, float Steepness)
+{
+	return MySmoothStep((X - MidpointPos) * Steepness + 0.5f);
+}

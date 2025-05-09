@@ -4,10 +4,14 @@
 #include "RHIGPUReadback.h"
 
 DECLARE_STATS_GROUP(TEXT("VoxelClouds"), STATGROUP_VoxelClouds, STATCAT_Advanced);
-DECLARE_CYCLE_STAT(TEXT("Voxel Cloud Compute Shader"), STAT_VoxelCloudComputeShader, STATGROUP_VoxelClouds);
+DECLARE_CYCLE_STAT(TEXT("Voxel Cloud Compute Shader Setup"), STAT_VoxelCloudComputeShader, STATGROUP_VoxelClouds);
+DECLARE_CYCLE_STAT(TEXT("Voxel Cloud Compute Shader Readback"), STAT_VoxelCloudReadback, STATGROUP_VoxelClouds);
 
 IMPLEMENT_GLOBAL_SHADER(FVoxelCloudsMarchingCubesComputeShader, "/VoxelCloudsPluginShaders/MarchingCubesComputeShader.usf", "MainComputeShader", SF_Compute);
 IMPLEMENT_GLOBAL_SHADER(FVoxelCloudExistenceComputeShader, "/VoxelCloudsPluginShaders/MyVoxelExistenceComputeShader.usf", "MainComputeShader", SF_Compute);
+
+DECLARE_GPU_STAT(VoxelCloudExistenceComputeShader);
+DECLARE_GPU_STAT(VoxelCloudsMarchingCubesComputeShader);
 
 void FVoxelCloudComputeShaders::Dispatch(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback) {
 	if (IsInRenderingThread()) {
@@ -31,11 +35,10 @@ void FVoxelCloudComputeShaders::DispatchGameThread(const FVoxelCloudExistenceCom
 
 void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& RHICmdList, FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback)
 {
+	SCOPE_CYCLE_COUNTER(STAT_VoxelCloudComputeShader);
 	FRDGBuilder GraphBuilder(RHICmdList);
 
 	{
-		SCOPE_CYCLE_COUNTER(STAT_VoxelCloudComputeShader);
-		DECLARE_GPU_STAT(VoxelCloudComputeShader);
 		RDG_EVENT_SCOPE(GraphBuilder, "VoxelCloudComputeShader");
 
 		const uint32 NumVoxels = Parameters.VoxelGridSize.X * Parameters.VoxelGridSize.Y * Parameters.VoxelGridSize.Z;
@@ -59,13 +62,16 @@ void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& R
 		PassParametersA->OutputBuffer = GraphBuilder.CreateUAV(OutputBuffer);
 
 		FIntVector GroupCount = FComputeShaderUtils::GetGroupCount(FIntVector(Parameters.VoxelGridSize) + FIntVector(1,1,1), FIntVector(8, 8, 8));
-
+        
+        RDG_GPU_STAT_SCOPE(GraphBuilder, VoxelCloudExistenceComputeShader);
 		FComputeShaderUtils::AddPass(
 			GraphBuilder,
 			RDG_EVENT_NAME("RunVoxelCloudComputeShaderA"),
 			ComputeShaderA,
 			PassParametersA,
 			GroupCount);
+
+		
 		///////////////////////////////
 		//SETUP SECOND COMPUTE SHADER//
 		///////////////////////////////
@@ -108,6 +114,7 @@ void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& R
 		//ADD PASS
 		GroupCount = FComputeShaderUtils::GetGroupCount(FIntVector(Parameters.VoxelGridSize), FIntVector(8, 8, 8));
 
+		RDG_GPU_STAT_SCOPE(GraphBuilder, VoxelCloudsMarchingCubesComputeShader);
 		FComputeShaderUtils::AddPass(
 			GraphBuilder,
 			RDG_EVENT_NAME("RunVoxelCloudComputeShaderB"),
@@ -131,6 +138,7 @@ void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& R
 		auto RunnerFunc = [VertexReadback, CounterReadback, IndexReadback, AsyncCallback](auto&& RunnerFunc) -> void {
 			if (VertexReadback->IsReady() && CounterReadback->IsReady() && IndexReadback->IsReady())
 			{
+				SCOPE_CYCLE_COUNTER(STAT_VoxelCloudReadback);
 				uint32 Count = *static_cast<uint32*>(CounterReadback->Lock(0));
 				CounterReadback->Unlock();
 								
