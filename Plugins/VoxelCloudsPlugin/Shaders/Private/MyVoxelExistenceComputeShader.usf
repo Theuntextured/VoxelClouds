@@ -39,12 +39,13 @@ void MainComputeShader(uint3 DispatchThreadId : SV_DispatchThreadID)
 
 		float3 WorldPosition = (float3(DispatchThreadId.xyz) * VoxelSize) - Offset;
 		float3 NoisePosition = WorldPosition / NoiseScale;
-		float NoiseVal = NormalizedSimplexNoise4D(NoisePosition * 0.1, TotalTime * 0.01);
+		float NoiseVal = NormalizedSimplexNoise4D(NoisePosition * 0.1, TotalTime * 0.1);
 		float CloudVal = CumulusCloud(NoisePosition);
 
-		float Mult = SmoothActivationCoefficientNorm(NormalizedPosition.z, .4);
+		float Mult = SmoothActivationCoefficientNorm(NormalizedPosition.z, .6);
+		//Mult = lerp(Mult, 0.5f, NormalizedSimplexNoise4D(UNPACK_FLOAT_3(NoisePosition), TotalTime) * 0.01);
 		
-		Output = CloudVal * Mult * BetterSmoothStep(NoiseVal, 1 - CloudinessThreshold, .5f);
+		Output = CloudVal * Mult * BetterSmoothStep(NoiseVal, 1 - CloudinessThreshold, .35f);
 	}
 	
 	OutputBuffer[Index] = Output;

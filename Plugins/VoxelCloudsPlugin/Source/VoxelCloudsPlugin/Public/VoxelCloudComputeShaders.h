@@ -40,13 +40,28 @@ class FVoxelCloudsMarchingCubesComputeShader final : public FGlobalShader
 	END_SHADER_PARAMETER_STRUCT()
 };
 
+using FVoxelCloudCallbackFunction = TFunction<void(const TArray<FVector3f>&, const TArray<uint32>&)>;
+
 class FVoxelCloudComputeShaders
 {
 public:
+	struct FAsyncCallbackStruct
+	{
+		FAsyncCallbackStruct() : Callback(nullptr), ShouldCall(false) {}
+		explicit FAsyncCallbackStruct(const FVoxelCloudCallbackFunction& Callback) : Callback(Callback), ShouldCall(true) {}
+		void operator ()(const TArray<FVector3f>& Vertices, const TArray<uint32>& Indices) const
+		{
+			if (ShouldCall)
+				Callback(Vertices, Indices);
+		}
+		FVoxelCloudCallbackFunction Callback;
+		bool ShouldCall;
+	};
+	
 	// Dispatches this shader. Can be called from any thread
-	static void Dispatch(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback);
+	static void Dispatch(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, const FAsyncCallbackStruct& AsyncCallback);
 
 private:
-	static void DispatchGameThread(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback);
-	static void DispatchRenderThread(FRHICommandListImmediate& RHICmdList, FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback);
+	static void DispatchGameThread(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, const FAsyncCallbackStruct& AsyncCallback);
+	static void DispatchRenderThread(FRHICommandListImmediate& RHICmdList, FVoxelCloudExistenceComputeShader::FParameters& Parameters, const FAsyncCallbackStruct& AsyncCallback);
 };

@@ -39,6 +39,12 @@ void AVoxelCloudVolume::OnConstruction(const FTransform& Transform) {
 	//UpdateCloudRendererMesh();
 }
 
+void AVoxelCloudVolume::ForceUpdateMesh()
+{
+	UpdateCloudRendererBounds();
+	UpdateCloudRendererMesh();
+}
+
 void AVoxelCloudVolume::UpdateCloudRendererMesh() {
 	if(!RealTime) return;
 	const auto LocalBounds = Volume->CalcLocalBounds().GetBox();

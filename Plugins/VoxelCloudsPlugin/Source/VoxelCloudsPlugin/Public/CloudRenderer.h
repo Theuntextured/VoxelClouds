@@ -26,9 +26,15 @@ protected:
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 	virtual int32 GetNumMaterials() const override { return 1; }
 	void UpdateMesh(const TArray<FVector3f>& NewVerts, const TArray<uint32>& NewIndices);
+
+	virtual void BeginPlay() override;
+	virtual void BeginDestroy() override;
 	
 	TArray<FVector3f> Vertices;
 	TArray<uint32> Indices;
 	FBoxSphereBounds Bounds;
 	bool IsProcessing = false;
+
+private:
+	FVoxelCloudComputeShaders::FAsyncCallbackStruct Callback;
 };

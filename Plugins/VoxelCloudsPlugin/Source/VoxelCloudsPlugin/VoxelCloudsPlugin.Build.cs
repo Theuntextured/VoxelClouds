@@ -8,12 +8,6 @@ public class VoxelCloudsPlugin: ModuleRules
 
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		PrivateIncludePaths.AddRange(new string[] 
-		{
-			"Runtime/Renderer/Private",
-			"VoxelCloudShaders/Private"
-		});
 		if (Target.bBuildEditor == true)
 		{
 			PrivateDependencyModuleNames.Add("TargetPlatform");

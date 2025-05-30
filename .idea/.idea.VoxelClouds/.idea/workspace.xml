@@ -11,20 +11,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2dc87620-3c52-42da-bfd4-1c441b46f914" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/CloudTypes.usf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/Common.usf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.VoxelClouds/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.VoxelClouds/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEditor.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEditor.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/CloudMaterial.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/CloudMaterial.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/TestMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TestMap.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/MyVoxelExistenceComputeShader.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/MyVoxelExistenceComputeShader.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/ShaderParameters.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/ShaderParameters.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/SimplexNoise.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Shaders/Private/SimplexNoise.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Private/VoxelCloudComputeShaders.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Private/VoxelCloudComputeShaders.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Private/VoxelCloudVolume.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Private/VoxelCloudVolume.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Public/VoxelCloudVolume.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/VoxelCloudsPlugin/Source/VoxelCloudsPlugin/Public/VoxelCloudVolume.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VoxelClouds.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/VoxelClouds.uproject" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -250,6 +237,8 @@
       <workItem from="1746748319824" duration="600000" />
       <workItem from="1746748940518" duration="3718000" />
       <workItem from="1746792627998" duration="7596000" />
+      <workItem from="1746802243917" duration="2123000" />
+      <workItem from="1746977482077" duration="377000" />
     </task>
     <servers />
   </component>

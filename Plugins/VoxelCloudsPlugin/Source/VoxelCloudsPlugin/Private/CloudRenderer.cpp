@@ -34,6 +34,24 @@ void UCloudRendererComponent::UpdateMesh(const TArray<FVector3f>& NewVerts, cons
 	MarkRenderDynamicDataDirty();
     MarkRenderStateDirty();
 }
+
+void UCloudRendererComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	Callback = FVoxelCloudComputeShaders::FAsyncCallbackStruct(
+   [this](const TArray<FVector3f>& Vertices, const TArray<uint32>& Indices)
+	{
+		UpdateMesh(Vertices, Indices);
+   		IsProcessing = false;
+	});
+}
+
+void UCloudRendererComponent::BeginDestroy()
+{
+	Super::BeginDestroy();
+	Callback.ShouldCall = false;
+}
+
 void UCloudRendererComponent::UpdateMesh(const FVoxelCloudExistenceComputeShader::FParameters& Parameters) {
     if(IsProcessing) return;
     IsProcessing = true;
@@ -42,14 +60,9 @@ void UCloudRendererComponent::UpdateMesh(const FVoxelCloudExistenceComputeShader
         UpdateMesh({},{});
         return;
     }
-			
     FVoxelCloudComputeShaders::Dispatch(
         Parameters,
-        [this, Parameters](TArray<FVector3f> Vertices, TArray<uint32> Indices)
-        {
-            UpdateMesh(Vertices, Indices);
-            IsProcessing = false;
-        }
+		Callback
     );
 }
 

@@ -19,27 +19,30 @@ public:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual bool ShouldTickIfViewportsOnly() const override { return true; }
 
+	UFUNCTION(BlueprintCallable, Category = "VoxelClouds")
+	void ForceUpdateMesh();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UCloudRendererComponent* CloudRenderer;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UBoxComponent* Volume;
 
-	UPROPERTY(EditAnywhere, Category = "Voxel Clouds")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Voxel Clouds")
 	float VoxelSize = 100.f;
 	UPROPERTY(EditAnywhere, Category = "Voxel Clouds")
 	float NoiseScale = 1.0f;
 	UPROPERTY(BlueprintReadOnly, Category = "Voxel Clouds")
 	double TotalTime = 0.;
-	UPROPERTY(EditAnywhere, Category = "Voxel Clouds")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Voxel Clouds")
 	double TimeScale = 1.0;
-	UPROPERTY(EditAnywhere, Category = "Voxel Clouds")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Voxel Clouds")
 	FVector Bounds = {100, 100, 100};
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Voxel Clouds", meta = (ClampMin = "0", ClampMax = "1", UIMin = "0", UIMax = "1"))
 	float Cloudiness = 0.5f;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Voxel Clouds", meta = (ClampMin = "0", ClampMax = "1", UIMin = "0", UIMax = "1"))
 	float Roundedness = 0.5f;
 
-	UPROPERTY(EditAnywhere, Category = "Voxel Clouds")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Voxel Clouds")
 	bool RealTime = false;
 	
 private:

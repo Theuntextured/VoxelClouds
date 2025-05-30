@@ -45,7 +45,6 @@ float GetValueAtIndex(const int Index)
 void MainComputeShader(uint3 CurrentGridPosition : SV_DispatchThreadID) {
 	if(CurrentGridPosition.x >= VoxelGridSize.x || CurrentGridPosition.y >= VoxelGridSize.y || CurrentGridPosition.z >= VoxelGridSize.z)
 		return;
-
 	
 	int OffsetIndices[8];
 	for(int i = 0; i < 8; i++) {
@@ -79,7 +78,6 @@ void MainComputeShader(uint3 CurrentGridPosition : SV_DispatchThreadID) {
 
 		float3 VertexPosition = lerp(WorldPositionA, WorldPositionB, Alpha);
 		VerticesToAdd[CurrentIndex++] = VertexPosition;
-		
 		if(CurrentIndex == 3) {
 			CurrentIndex = 0;
 			

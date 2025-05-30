@@ -13,7 +13,7 @@ IMPLEMENT_GLOBAL_SHADER(FVoxelCloudExistenceComputeShader, "/VoxelCloudsPluginSh
 DECLARE_GPU_STAT(VoxelCloudExistenceComputeShader);
 DECLARE_GPU_STAT(VoxelCloudsMarchingCubesComputeShader);
 
-void FVoxelCloudComputeShaders::Dispatch(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback) {
+void FVoxelCloudComputeShaders::Dispatch(const FVoxelCloudExistenceComputeShader::FParameters& Parameters, const FAsyncCallbackStruct& AsyncCallback) {
 	if (IsInRenderingThread()) {
 		FVoxelCloudExistenceComputeShader::FParameters OutParams = Parameters;
 		DispatchRenderThread(GetImmediateCommandList_ForRenderCommand(), OutParams, AsyncCallback);
@@ -23,7 +23,8 @@ void FVoxelCloudComputeShaders::Dispatch(const FVoxelCloudExistenceComputeShader
 }
 
 void FVoxelCloudComputeShaders::DispatchGameThread(const FVoxelCloudExistenceComputeShader::FParameters& Parameters,
-	TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback) {
+                                                   const FAsyncCallbackStruct& AsyncCallback)
+{
 	ENQUEUE_RENDER_COMMAND(SceneDrawCompletion)(
 		[Parameters, AsyncCallback](FRHICommandListImmediate& RHICmdList)
 		{
@@ -33,7 +34,9 @@ void FVoxelCloudComputeShaders::DispatchGameThread(const FVoxelCloudExistenceCom
 }
 
 
-void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& RHICmdList, FVoxelCloudExistenceComputeShader::FParameters& Parameters, TFunction<void(TArray<FVector3f>, TArray<uint32>)> AsyncCallback)
+void FVoxelCloudComputeShaders::DispatchRenderThread(FRHICommandListImmediate& RHICmdList,
+                                                     FVoxelCloudExistenceComputeShader::FParameters& Parameters,
+                                                     const FAsyncCallbackStruct& AsyncCallback)
 {
 	SCOPE_CYCLE_COUNTER(STAT_VoxelCloudComputeShader);
 	FRDGBuilder GraphBuilder(RHICmdList);
