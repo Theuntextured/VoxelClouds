@@ -1,50 +1,53 @@
-using UnrealBuildTool; 
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
-public class VoxelCloudsPlugin: ModuleRules 
+using UnrealBuildTool;
 
-{ 
-
-	public VoxelCloudsPlugin(ReadOnlyTargetRules Target) : base(Target) 
-
+public class VoxelCloudsPlugin : ModuleRules
+{
+	public VoxelCloudsPlugin(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		if (Target.bBuildEditor == true)
-		{
-			PrivateDependencyModuleNames.Add("TargetPlatform");
-		}
-		PublicDependencyModuleNames.Add("Core");
-		PublicDependencyModuleNames.Add("Engine");
-		PublicDependencyModuleNames.Add("MaterialShaderQualitySettings");
+		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
-		
-		PrivateDependencyModuleNames.AddRange(new string[]
-		{
-			"CoreUObject",
-			"Renderer",
-			"RenderCore",
-			"RHI",
-			"Projects"
-		});
-		
-		if (Target.bBuildEditor == true)
-		{
-
-			PrivateDependencyModuleNames.AddRange(
-				new string[] {
-					"UnrealEd",
-					"MaterialUtilities",
-					"SlateCore",
-					"Slate"
-				}
+		PublicIncludePaths.AddRange(
+			new string[] {
+				// ... add public include paths required here ...
+			}
 			);
-
-			CircularlyReferencedDependentModules.AddRange(
-				new string[] {
-					"UnrealEd",
-					"MaterialUtilities",
-				}
+				
+		
+		PrivateIncludePaths.AddRange(
+			new string[] {
+				// ... add other private include paths required here ...
+			}
 			);
-		}
-	} 
-
+			
+		
+		PublicDependencyModuleNames.AddRange(
+			new string[]
+			{
+				"Core", "Engine", "RHI"
+				// ... add other public dependencies that you statically link with here ...
+			}
+			);
+			
+		
+		PrivateDependencyModuleNames.AddRange(
+			new string[]
+			{
+				"CoreUObject",
+				"Engine",
+				"Slate",
+				"SlateCore",
+				// ... add private dependencies that you statically link with here ...	
+			}
+			);
+		
+		
+		DynamicallyLoadedModuleNames.AddRange(
+			new string[]
+			{
+				// ... add any modules that your module loads dynamically here ...
+			}
+			);
+	}
 }
