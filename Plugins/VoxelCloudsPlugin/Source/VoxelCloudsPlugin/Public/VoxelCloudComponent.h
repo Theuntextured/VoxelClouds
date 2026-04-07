@@ -20,6 +20,12 @@ public:
 	FVector Bounds = FVector(100, 100, 100);
 	UPROPERTY(EditAnywhere, Category = "VoxelClouds", meta=(ClampMin="1", ClampMax="1000", UIMin="0", UIMax="1000", SliderExponent="2", Units="cm"))
 	double VoxelSize = 100;
+	UPROPERTY(EditAnywhere, Category = "VoxelClouds|LOD", meta=(ClampMin="0", Units="cm"))
+	FPerQualityLevelFloat CloudLodBias = 10000;
+	UPROPERTY(EditAnywhere, Category = "VoxelClouds|LOD", meta=(ClampMin="1"))
+	double CloudLodDistanceScalingPower = 1;
+	UPROPERTY(EditAnywhere, Category = "VoxelClouds|LOD", meta=(ClampMin="2"))
+	int32 LodZeroChunkSize = 128;
 	
 	void SetBounds(const FVector& InBounds);
 private:

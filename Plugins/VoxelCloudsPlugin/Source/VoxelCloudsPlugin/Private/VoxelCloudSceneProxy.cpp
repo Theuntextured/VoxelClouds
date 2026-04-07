@@ -2,6 +2,8 @@
 
 
 #include "VoxelCloudSceneProxy.h"
+
+#include "VoxelCloudChunk.h"
 #include "VoxelCloudComponent.h"
 
 FVoxelCloudSceneProxy::FVoxelCloudSceneProxy(UVoxelCloudComponent* Component)
@@ -14,43 +16,58 @@ FVoxelCloudSceneProxy::FVoxelCloudSceneProxy(UVoxelCloudComponent* Component)
 	VoxelSize = Component->VoxelSize;
 	BoxBounds = FVector(FIntVector(BoxBounds / VoxelSize)) * VoxelSize;
 	LocalBox = FBox(-BoxBounds, BoxBounds);
+	CloudLodBias = Component->CloudLodBias.GetValue(Scalability::GetQualityLevels().ViewDistanceQuality);
+	LodZeroChunkSize = Component->LodZeroChunkSize;
+	CloudLodDistanceScalingPower = Component->CloudLodDistanceScalingPower;
+	
+	const int32 MaxVoxelPerSide = FMath::RoundToInt32((LocalBox.GetExtent().GetAbsMax() * 2.0) / VoxelSize);
+	const int32 MaxLodZeroPerSide = (MaxVoxelPerSide + LodZeroChunkSize - 1) / LodZeroChunkSize;
+	MaxLod = FMath::CeilLogTwo(MaxLodZeroPerSide);
 }
 
 FVoxelCloudSceneProxy::~FVoxelCloudSceneProxy()
 {
+	
 }
 
-#include "SceneManagement.h"
+FConvexVolume TransformFrustumToLocal(const FConvexVolume& WorldFrustum, const FMatrix& LocalToWorld)
+{
+	FConvexVolume LocalFrustum;
+	const auto WorldToLocalMatrix = LocalToWorld.InverseFast();
+	for (const FPlane& WorldPlane : WorldFrustum.Planes)
+		LocalFrustum.Planes.Add(WorldPlane.TransformBy(WorldToLocalMatrix));
+
+	LocalFrustum.Init();
+    
+	return LocalFrustum;
+}
 
 void FVoxelCloudSceneProxy::GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const
 {
+	const bool bIsInGame = ViewFamily.EngineShowFlags.Game;
 	for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
 	{
-		if (VisibilityMap & (1 << ViewIndex))
+		if (!(VisibilityMap & (1 << ViewIndex))) continue;
+		const FSceneView* View = Views[ViewIndex];
+		
+		FPrimitiveDrawInterface* PDI = Collector.GetPDI(ViewIndex);
+		if (!bIsInGame)
 		{
-			FPrimitiveDrawInterface* PDI = Collector.GetPDI(ViewIndex);
-			
 			DrawWireBox(PDI, 
-				ProxyToWorld, DesiredLocalBox, 
-				IsIndividuallySelected() ? FColor::Orange : FColor::Cyan, 
-				SDPG_World, 
-				2.0f);
-			
-			if (IsIndividuallySelected())
-			{
-				for (double x = LocalBox.Min.X; x <= LocalBox.Max.X; x += VoxelSize)
-					for (double y = LocalBox.Min.Y; y <= LocalBox.Max.Y; y += VoxelSize)
-							for (double z = LocalBox.Min.Z; z <= LocalBox.Max.Z; z += VoxelSize)
-							{
-								const FVector Position = ProxyToWorld.TransformPosition(FVector(x, y, z));
-								PDI->DrawPoint(
-									Position,
-									FColor::Blue,
-									2.f,
-									SDPG_World);
-							}
-			}
+			            ProxyToWorld, DesiredLocalBox, 
+			            IsIndividuallySelected() ? FColor::Orange : FColor::Cyan, 
+			            SDPG_World, 
+			            2.0f);
 		}
+		FVoxelCloudChunk RootChunk(
+			this, 
+			MaxLod, 
+			LocalBox, 
+			LocalBox, 
+			TransformFrustumToLocal(View->ViewFrustum, ProxyToWorld),
+			ProxyToWorld.InverseTransformPosition(View->ViewLocation)
+			);
+		RootChunk.DrawDebug(PDI);
 	}
 }
 

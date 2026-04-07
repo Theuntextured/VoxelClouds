@@ -9,6 +9,8 @@
  */
 class VOXELCLOUDSPLUGIN_API FVoxelCloudSceneProxy : public FPrimitiveSceneProxy
 {
+	using Super = FPrimitiveSceneProxy;
+	friend class FVoxelCloudChunk;
 public:
 	FVoxelCloudSceneProxy(class UVoxelCloudComponent* Component);
 	virtual ~FVoxelCloudSceneProxy() override;
@@ -22,4 +24,8 @@ private:
 	FBox DesiredLocalBox;
 	FBox LocalBox;
 	double VoxelSize;
+	double CloudLodBias;
+	int32 LodZeroChunkSize;
+	double CloudLodDistanceScalingPower;
+	int32 MaxLod;
 };
