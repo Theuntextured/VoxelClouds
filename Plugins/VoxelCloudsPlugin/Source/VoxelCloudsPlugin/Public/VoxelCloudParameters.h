@@ -1,0 +1,9 @@
+﻿#pragma once
+
+BEGIN_SHADER_PARAMETER_STRUCT(FVoxelDensityParameters,)
+	SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture3D<float>, OutDensityVolume)
+
+	SHADER_PARAMETER(FVector3f, ChunkMin)
+	SHADER_PARAMETER(FVector3f, ChunkMax)
+	SHADER_PARAMETER(FIntVector, Resolution)
+END_SHADER_PARAMETER_STRUCT()

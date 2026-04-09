@@ -10,7 +10,9 @@ UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class VOXELCLOUDSPLUGIN_API UVoxelCloudComponent : public UPrimitiveComponent
 {
 	GENERATED_BODY()
-
+	friend class FVoxelCloudSceneProxy;
+	friend class FVoxelCloudSceneViewExtension;
+	using FViewExtension = class FVoxelCloudSceneViewExtension;
 public:
 	UVoxelCloudComponent();
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
@@ -26,6 +28,8 @@ public:
 	double CloudLodDistanceScalingPower = 1;
 	UPROPERTY(EditAnywhere, Category = "VoxelClouds|LOD", meta=(ClampMin="2"))
 	int32 LodZeroChunkSize = 128;
+	UPROPERTY(EditAnywhere, Category = "VoxelClouds|LOD", meta=(ClampMin="0"))
+	double BoxWireWidth = 20.;
 	
 	void SetBounds(const FVector& InBounds);
 private:
@@ -33,4 +37,5 @@ private:
 	class UStaticMesh* DebugCubeMesh = nullptr;
 	UPROPERTY()
 	class UMaterialInterface* DebugMaterial = nullptr;
+	TSharedRef<FViewExtension> SceneViewExtension;
 };

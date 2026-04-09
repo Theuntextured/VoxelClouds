@@ -3,6 +3,7 @@
 #include "VoxelCloudComponent.h"
 
 #include "VoxelCloudSceneProxy.h"
+#include "VoxelCloudSceneViewExtension.h"
 
 UVoxelCloudComponent::UVoxelCloudComponent()
 {
@@ -13,6 +14,8 @@ UVoxelCloudComponent::UVoxelCloudComponent()
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> MaterialAsset(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
 	if (MaterialAsset.Succeeded())
 		DebugMaterial = MaterialAsset.Object;
+	
+	SceneViewExtension = FSceneViewExtensions::NewExtension<FViewExtension>(this);
 }
 
 FPrimitiveSceneProxy* UVoxelCloudComponent::CreateSceneProxy()

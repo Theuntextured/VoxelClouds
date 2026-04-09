@@ -20,12 +20,6 @@ public:
 	virtual SIZE_T GetTypeHash() const override;
 	
 private:
-	FMatrix ProxyToWorld;
-	FBox DesiredLocalBox;
-	FBox LocalBox;
-	double VoxelSize;
-	double CloudLodBias;
-	int32 LodZeroChunkSize;
-	double CloudLodDistanceScalingPower;
-	int32 MaxLod;
+	TSharedRef<class FVoxelCloudSceneViewExtension> ViewExtension;
+	double BoxWireWidth = 10;
 };
